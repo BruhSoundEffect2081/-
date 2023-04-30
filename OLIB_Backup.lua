@@ -26,6 +26,7 @@ getgenv().RCP = function(Message,Color,Clear)
     end)()
 end
 RCP("","",true)
+RCP({"O-ESP Version V1.3"},"nicemessage")
 RCP({"O-ESP Lib Loading","Tick",tick()-StartTick},"message")
 
 local ErrorStatus,ErrorMessage = pcall(function()
