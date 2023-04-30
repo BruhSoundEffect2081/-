@@ -26,7 +26,7 @@ getgenv().RCP = function(Message,Color,Clear)
     end)()
 end
 RCP("","",true)
-RCP({"O-ESP Version V1.3"},"nicemessage")
+RCP({"O-ESP Version V1.4"},"nicemessage")
 RCP({"O-ESP Lib Loading","Tick",tick()-StartTick},"message")
 
 local ErrorStatus,ErrorMessage = pcall(function()
@@ -34,7 +34,7 @@ local ErrorStatus,ErrorMessage = pcall(function()
 
 if ESPStorage then
     for id,table in pairs(ESPStorage) do
-        RCP({"Removed",id},"dark")
+        --RCP({"Removed",id},"dark")
         table["Delete"]()
     end
 end
