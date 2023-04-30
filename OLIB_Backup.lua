@@ -1,3 +1,7 @@
+getgenv().RCONSOLEMODE = true
+getgenv().AutoUpdate_OESP = false
+-- dont add in loadstring above
+
 repeat game:GetService("RunService").Heartbeat:Wait() until game:IsLoaded()
 local StartTick = tick()
 local Players = game.Players or game:GetService("Players")
@@ -14,6 +18,7 @@ getgenv().RCP = function(Message,Color,Clear)
             ["error"] = "RED";
             ["nicemessage"] = "LIGHT_GREEN";
             ["dark"] = "DARK_GRAY";
+            ["remove"] = "LIGHT_RED";
         }
         if typeof(Message) == "table" then
             Send = table.concat(Message," ")
@@ -225,6 +230,7 @@ getgenv().ESP = {
             if table["Instance"] == Instance then
                 table["Delete"]()
                 ESPStorage[id] = nil
+                RCP({"Removed ID",id},"remove")
                 break
             end
         end
