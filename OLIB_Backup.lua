@@ -1,7 +1,3 @@
-getgenv().RCONSOLEMODE = true
-getgenv().AutoUpdate_OESP = false
--- dont add in loadstring above
-
 repeat game:GetService("RunService").Heartbeat:Wait() until game:IsLoaded()
 local StartTick = tick()
 local Players = game.Players or game:GetService("Players")
