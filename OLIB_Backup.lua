@@ -1,3 +1,10 @@
+--[[
+Easy Loadstring
+
+getgenv().RCONSOLEMODE = true
+getgenv().AutoUpdate_OESP = true
+loadstring(game:HttpGet("https://raw.githubusercontent.com/BruhSoundEffect2081/-/main/OLIB_Backup.lua"))()
+]]
 repeat game:GetService("RunService").Heartbeat:Wait() until game:IsLoaded()
 local StartTick = tick()
 local Players = game.Players or game:GetService("Players")
@@ -26,7 +33,7 @@ getgenv().RCP = function(Message,Color,Clear)
     end)()
 end
 RCP("","",true)
-RCP({"O-ESP Version V1.4"},"nicemessage")
+RCP({"O-ESP Version V1.4B"},"nicemessage")
 RCP({"O-ESP Lib Loading","Tick",tick()-StartTick},"message")
 
 local ErrorStatus,ErrorMessage = pcall(function()
@@ -338,7 +345,7 @@ getgenv().ESP = {
                 Parts[ObjectGUID] = {{Object,_}}
                 
                 Parts[ObjectGUID][2] = Drawing.new(Object)
-                Parts[ObjectGUID][2].Visible = true;
+                Parts[ObjectGUID][2].Visible = false;
                 Parts[ObjectGUID][2].Transparency = 1;
                 if Options["CustomColor"] then
                     Parts[ObjectGUID][2].Color = Options["CustomColor"];
@@ -389,9 +396,9 @@ if AutoUpdate_OESP then
     getgenv().CONN_OESP_RENDERSTEP = RunService.RenderStepped:Connect(function()
         ESP.Update()
     end)
-    RCP("Auto Update Is Enabled.","nicemessage")
+    RCP("O-ESP Lib Auto Update Is Enabled.","nicemessage")
 else
-    RCP("Auto Update Isn't Enabled.","error")
+    RCP("O-ESP Lib Auto Update Isn't Enabled.","error")
 end
 
 -- PCALL END
