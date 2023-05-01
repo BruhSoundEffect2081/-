@@ -2,6 +2,7 @@
 Easy Loadstring
 
 getgenv().RCONSOLEMODE = true
+getgenv().RCONSOLEPRINTMODE = "IntConsole"
 getgenv().AutoUpdate_OESP = true
 loadstring(game:HttpGet("https://raw.githubusercontent.com/BruhSoundEffect2081/-/main/OLIB_Backup.lua"))()
 ]]
@@ -14,7 +15,6 @@ local RunService = game.RunService or game:GetService("RunService")
 getgenv().RCP = function(Message,Color,Clear)
     coroutine.wrap(function()
         if not RCONSOLEMODE then return end
-        if Clear then rconsoleclear() return end
         local Send = ""
         local Colors = {
             ["message"] = "LIGHT_BLUE";
@@ -24,28 +24,35 @@ getgenv().RCP = function(Message,Color,Clear)
             ["remove"] = "LIGHT_RED";
         }
         if typeof(Message) == "table" then
-            Send = table.concat(Message," ")
+            for _,v in pairs(Message) do 
+                Send = Send..tostring(v).." "
+            end
         else
             Send = tostring(Message)
         end
-        if Color then if Colors[Color] then rconsoleprint("@@"..Colors[Color].."@@") end end
-        rconsoleprint(Send.."\n")
+        if RCONSOLEPRINTMODE == "IntConsole" then
+            printconsole(Send,245,188,66)
+        else
+            if Clear then rconsoleclear() return end
+            if Color then if Colors[Color] then rconsoleprint("@@"..Colors[Color].."@@") end end
+            rconsoleprint(Send.."\n")
+        end
     end)()
 end
 RCP("","",true)
-RCP({"O-ESP Version V1.4B"},"nicemessage")
-RCP({"O-ESP Lib Loading","Tick",tick()-StartTick},"message")
 
 local ErrorStatus,ErrorMessage = pcall(function()
 -- PCALL START
 
 if ESPStorage then
     for id,table in pairs(ESPStorage) do
-        --RCP({"Removed",id},"dark")
+        RCP({"Removed",id},"dark")
         table["Delete"]()
     end
 end
 
+RCP({"O-ESP Version V1.5"},"nicemessage")
+RCP({"O-ESP Lib Loading"},"message")
 RCP({"O-ESP Creating ESP Functions",},"message")
 getgenv().ESPGroups = {}
 getgenv().ESPStorage = {}
@@ -58,12 +65,16 @@ getgenv().ESP = {
     end;
     
     ToggleGroup = function(Group,Forced)
-        if ESP.CheckGroup(Group) or not ESP.CheckGroup(Group) then
+        if ESP.CheckGroup(Group) == true or ESP.CheckGroup(Group) == false then
             if not Forced then
                 ESPGroups[Group] = not ESPGroups[Group]
             else
                 ESPGroups[Group] = Forced
             end
+            RCP({"O-ESP Toggled Group",Group,tostring(Forced)},"nicemessage")
+        else
+            RCP({"O-ESP Group Doesn't Exist, Creating",Group,tostring(Forced)},"nicemessage")
+            ESP.CreateGroup(Group,Forced or false)
         end
         return
     end;
@@ -78,6 +89,7 @@ getgenv().ESP = {
     CreateGroup = function(New,Default)
         if not New or Default == nil then return end
         ESPGroups[New] = Default
+        RCP({"O-ESP Created Group",New,tostring(Default)},"nicemessage")
         return
     end;
     
@@ -89,36 +101,25 @@ getgenv().ESP = {
             local Enabled = table["Enabled"]
             local TempEnabled = true
             local Instance = table["Instance"]
-            if Players.LocalPlayer.Character then
-                if Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local Dist = (Players.LocalPlayer.Character.HumanoidRootPart.Position - Instance.Position).magnitude
-                    Dist = string.split(tostring(Dist),".")[1]
-                    if TempSettings["MaxDistance"] then
-                        if tonumber(Dist) > TempSettings["MaxDistance"] then
-                            ESP.Hide(Instance)
-                            return
-                        end
-                    end
-                else
-                    ESP.Hide(Instance)
-                    return
-                end
-            else
-                ESP.Hide(Instance)
+            if not Instance then
+                ESP.Remove(Instance)
                 return
             end
             
             if TempSettings["Group"] then
-                if not ESP.CheckGroup(TempSettings["Group"]) then
+                if ESP.CheckGroup(TempSettings["Group"]) == false then
                     TempEnabled = false
                 else
                     TempEnabled = Enabled
                 end
             end
-            if not Instance then
-                ESP.Remove(Instance)
-                return
+            
+            if not TempEnabled then
+                ESP.Hide(Instance)
+            else
+                ESP.Show(Instance)
             end
+            
             local Continue = true
             for set,val in pairs(TempSettings) do
                 if set == "DescendantOfCheck" then
@@ -138,9 +139,17 @@ getgenv().ESP = {
                     end
                 elseif set == "FindFirstChildCheck" then
                     local FFC = false
-                    for _,instcheck2 in pairs(Instance:GetChildren()) do
-                        if instcheck2 == val then
+                    for _,instcheck2 in pairs(val["Parent"]:GetChildren()) do
+                        if instcheck2.Name == val["Child"] then
                             FFC = true
+                        end
+                    end
+                    Continue = FFC
+                elseif set == "OppositeFindFirstChildCheck" then
+                    local FFC = true
+                    for _,instcheck2 in pairs(val["Parent"]:GetChildren()) do
+                        if instcheck2.Name == val["Child"] then
+                            FFC = false
                         end
                     end
                     Continue = FFC
@@ -150,12 +159,33 @@ getgenv().ESP = {
                     end
                 end
             end
-            if not Continue then ESP.Remove(Instance) return end
-            local Camera = Workspace.CurrentCamera or Workspace:WaitForChild("Camera")
+            if not Continue then 
+                RCP("O-ESP Failed Continue Check","remove")
+                ESP.Remove(Instance)
+                return
+            end
+            local Dist = "-"
+            if Players.LocalPlayer.Character then
+                if Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    Dist = (Players.LocalPlayer.Character.HumanoidRootPart.Position - Instance.Position).magnitude
+                    Dist = string.split(tostring(Dist),".")[1]
+                    if TempSettings["MaxDistance"] then
+                        if tonumber(Dist) > tonumber(TempSettings["MaxDistance"]) then
+                            ESP.Hide(Instance)
+                            return
+                        end
+                    end
+                else
+                    ESP.Hide(Instance)
+                    return
+                end
+            end
+            local Camera = Workspace.CurrentCamera
             local Vector, OnScreen = Camera:WorldToViewportPoint(Instance.Position)
             local A,B = pcall(function()
                 for _,v in pairs(Parts) do
-                    if not Vector or not v then return end
+                    if not Vector or not v then RCP({"O-ESP Uh oh"},"nicemessage") return end
+                    if not v[2] then RCP({"O-ESP Couldn't Find Position",tostring(Vector)},"nicemessage") return end
                     if v[1][1] == "Line" then
                         v[2].From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 1.3)
                         v[2].To = Vector2.new(Vector.X, Vector.Y)
@@ -164,25 +194,8 @@ getgenv().ESP = {
                     elseif v[1][1] == "Text" then
                         local AddOffset = false
                         if v[1][2] == "DistanceTag" then
-                            if Players.LocalPlayer.Character then
-                                if Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                                    local Dist = (Players.LocalPlayer.Character.HumanoidRootPart.Position - Instance.Position).magnitude
-                                    Dist = string.split(tostring(Dist),".")[1]
-                                    if TempSettings["MaxDistance"] then
-                                        if tonumber(Dist) > TempSettings["MaxDistance"] then
-                                            table["Enabled"] = false
-                                        elseif OnScreen then
-                                            table["Enabled"] = true
-                                        end
-                                    end
-                                    v[2].Position = Vector2.new(Vector.X, Vector.Y + 20)
-                                    v[2].Text = Dist.."m"
-                                else
-                                    table["Enabled"] = false
-                                end
-                            else
-                                table["Enabled"] = false
-                            end
+                            v[2].Position = Vector2.new(Vector.X, Vector.Y + 20)
+                            v[2].Text = tostring(Dist).."m"
                         elseif v[1][2] == "HealthTag" then
                             local Humanoid = Instance.Parent:FindFirstChildWhichIsA("Humanoid")
                             if Humanoid then
@@ -205,15 +218,17 @@ getgenv().ESP = {
                     else
                         v[2].Visible = false
                     end
+                    --RCP({TempEnabled,Enabled,ESP.State(Instance),v[2].Visible,Instance.Name,Instance.Parent.Name},"message")
                 end
             end)
             if not A then
+                RCP({"O-ESP Update Error 1/10 [",tostring(B),"]"},"error")
                 ESP.Remove(Instance)
             end
         end
         end)
         if not ErrorStatus2 then
-            RCP({"O-ESP Update Error [",ErrorMessage2,"]"},"error")
+            RCP({"O-ESP Update Error 9/10 [",ErrorMessage2,"]"},"error")
         end
     end;
     
@@ -232,9 +247,10 @@ getgenv().ESP = {
         if not Instance then return end
         for id,table in pairs(ESPStorage) do
             if table["Instance"] == Instance then
+                ESP.Hide(Instance)
                 table["Delete"]()
                 ESPStorage[id] = nil
-                RCP({"Removed ID",id},"remove")
+                RCP({"Removed ID",id,tostring(Instance.Name) or "Instace Not Found",tostring(Instance.Parent.Name) or "Parent Not Found"},"remove")
                 break
             end
         end
@@ -278,6 +294,9 @@ getgenv().ESP = {
         if not Instance then return end
         for id,table in pairs(ESPStorage) do
             if table["Instance"] == Instance then
+                for _,v in pairs(table["Parts"]) do
+                    v.Visible = true
+                end
                 table["Enabled"] = true
                 break
             end
@@ -289,6 +308,9 @@ getgenv().ESP = {
         if not Instance then return end
         for id,table in pairs(ESPStorage) do
             if table["Instance"] == Instance then
+                for _,v in pairs(table["Parts"]) do
+                    v.Visible = false
+                end
                 table["Enabled"] = false
                 break
             end
@@ -313,6 +335,7 @@ getgenv().ESP = {
         
         local GUID = game:GetService("HttpService"):GenerateGUID(false)
         CreateGUIDTemp = GUID
+        --RCP({"O-ESP Creating [",CreateGUIDTemp,Instance.Name,Instance.Parent.Name,"]"},"nicemessage")
         ESPStorage[GUID] = {
             ["Instance"] = Instance;
             ["Settings"] = Options;
@@ -383,7 +406,7 @@ getgenv().ESP = {
         else
             --RCP({"O-ESP Created Successfully",tostring(CreateGUIDTemp)},"nicemessage")
         end
-        return
+        return true
     end
 }
 
@@ -421,7 +444,14 @@ return
 --     Group = "Group 1";
 
 --     ParentCheck = Wall.Parent;
---     FindFirstChildCheck = Wall.Child;
+--     FindFirstChildCheck = {
+--         Parent = Wall;
+--         Child = "ChildName";
+--     };
+--     OppositeFindFirstChildCheck = {
+--         Parent = Wall;
+--         Child = "ChildName";
+--     };
 --     DescendantCheck = Workspace;
 --     TransparencyCheck = 0;
 --     CheckForESPOnInstance = true;
